@@ -165,7 +165,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <p className="font-medium">Teléfono</p>
-                  <p className="text-muted-foreground">+34 900 123 456</p>
+                  <p className="text-muted-foreground">+593 96 2357 512</p>
                 </div>
               </div>
 
@@ -176,35 +176,15 @@ export default function Contact() {
                 <div>
                   <p className="font-medium">Dirección</p>
                   <p className="text-muted-foreground">
-                    Calle Sostenibilidad 123<br />
-                    28001 Madrid, España
+                    Ciudadela Universitaria<br />
+                    28001 Manta, Ecuador
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Horario de atención</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Lunes - Viernes:</span>
-                  <span className="font-medium">9:00 - 18:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Sábado:</span>
-                  <span className="font-medium">10:00 - 14:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Domingo:</span>
-                  <span className="font-medium">Cerrado</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+         
 
           <Card>
             <CardHeader>
