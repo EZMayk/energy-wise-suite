@@ -87,7 +87,7 @@ All colors MUST be HSL.
     --secondary-foreground: 140 20% 95%;
 
     --muted: 155 15% 15%;
-    --muted-foreground: 140 20% 85%;
+    --muted-foreground: 140 15% 60%;
 
     --accent: 200 80% 55%;
     --accent-foreground: 155 25% 8%;
@@ -113,7 +113,7 @@ All colors MUST be HSL.
     --sidebar-primary: 142 70% 50%;
     --sidebar-primary-foreground: 155 25% 8%;
     --sidebar-accent: 155 15% 15%;
-    --sidebar-accent-foreground: 140 25% 95%;
+    --sidebar-accent-foreground: 140 20% 90%;
     --sidebar-border: 155 15% 18%;
     --sidebar-ring: 142 70% 50%;
   }
@@ -334,35 +334,30 @@ All colors MUST be HSL.
   kbd {
     @apply inline-flex items-center justify-center px-2 py-1 text-xs font-semibold bg-muted border border-border rounded shadow-sm;
   }
-}
 
-/* Auth page helper: hide global chrome (sidebar, header, footer, floating controls) */
-@layer components {
-  body.auth-page {
-    --hide-important: display: none !important;
+  /* Custom scrollbar para el chatbot */
+  .chatbot-scrollbar::-webkit-scrollbar {
+    width: 6px;
   }
 
-  /* Prevent the browser page scrollbar when showing auth view; allow inner card scrolling */
-  html.auth-page,
-  body.auth-page {
-    height: 100vh;
-    overflow: hidden;
+  .chatbot-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 8px 0;
   }
 
-  body.auth-page aside,
-  body.auth-page header,
-  body.auth-page footer,
-  body.auth-page .skip-link,
-  body.auth-page [aria-label="Abrir menú de accesibilidad"],
-  body.auth-page .voice-control-active,
-  body.auth-page .slider,
-  body.auth-page .range-slider {
-    display: none !important;
+  .chatbot-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.25);
+    border-radius: 10px;
+    transition: background 0.2s;
   }
 
-  /* If the layout has a compact topbar element (button or small badge), hide it too */
-  body.auth-page .topbar-button,
-  body.auth-page .small-badge {
-    display: none !important;
+  .chatbot-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.4);
+  }
+
+  /* Para Firefox */
+  .chatbot-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.25) transparent;
   }
 }
