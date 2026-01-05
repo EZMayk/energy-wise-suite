@@ -8,8 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { 
+  Plus, Zap, TrendingUp, TrendingDown, Activity, 
+  Lightbulb, Target, Calendar, Cpu, Gauge, 
+  ChevronRight, Sparkles
+} from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -24,11 +38,24 @@ export default function Dashboard() {
   const [hoursWindow, setHoursWindow] = useState<number>(48);
   const [daysWindow, setDaysWindow] = useState<number>(30);
   const [loadingData, setLoadingData] = useState(true);
+  const [profileName, setProfileName] = useState<string>("");
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
       return;
+    }
+
+    // Fetch profile name
+    if (user) {
+      supabase
+        .from("profiles")
+        .select("nombre")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.nombre) setProfileName(data.nombre);
+        });
     }
 
     if (user) {
@@ -61,13 +88,11 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error loading devices:", error);
-      // don't block consumption loading
     }
   };
 
   const cargarConsumo = async () => {
     try {
-      // If a device is selected, load series depending on viewMode
       if (selectedDevice) {
         if (viewMode === "hourly") {
           const since = new Date(Date.now() - hoursWindow * 3600 * 1000).toISOString();
@@ -84,7 +109,6 @@ export default function Dashboard() {
           setConsumoData(data || []);
           return;
         } else {
-          // daily
           const sinceDate = new Date();
           sinceDate.setDate(sinceDate.getDate() - daysWindow + 1);
           const sinceStr = sinceDate.toISOString().split("T")[0];
@@ -103,7 +127,6 @@ export default function Dashboard() {
         }
       }
 
-      // Otherwise, load the most recent device (if any) and show its series
       const { data: devices } = await supabase
         .from("dispositivos")
         .select("id")
@@ -113,11 +136,9 @@ export default function Dashboard() {
       const firstDeviceId = devices && devices[0] ? devices[0].id : null;
       if (firstDeviceId) {
         setSelectedDevice(firstDeviceId);
-        // Recursive call will handle selectedDevice case on next effect
         return;
       }
 
-      // no devices -> empty series
       setConsumoData([]);
     } catch (error) {
       console.error("Error loading consumption:", error);
@@ -139,31 +160,27 @@ export default function Dashboard() {
       }).select("*");
 
       if (error) throw error;
-      toast.success("Dispositivo agregado");
+      toast.success("Dispositivo agregado correctamente");
       setNuevoDispositivo({ nombre: "", potencia_w: "" });
-      // If the insert returned the new device, select it and create an initial daily record
       const newDeviceId = data && data[0] ? data[0].id : null;
       await cargarDispositivos();
       if (newDeviceId) {
         setSelectedDevice(newDeviceId);
         const today = new Date().toISOString().split("T")[0];
 
-        // Create initial per-device daily consumption using potencia (hours=24)
         try {
           const potencia = data && data[0] ? Number(data[0].potencia_w || 0) : 0;
-          const kwh = Math.round(((potencia * 24) / 1000) * 1000) / 1000; // 3 decimals
-          const { error: insertError } = await supabase.from("dispositivo_consumo_diario").insert({
+          const kwh = Math.round(((potencia * 24) / 1000) * 1000) / 1000;
+          await supabase.from("dispositivo_consumo_diario").insert({
             dispositivo_id: newDeviceId,
             fecha: today,
             consumo_kwh: kwh,
           });
-          if (insertError) throw insertError;
         } catch (e) {
           console.warn("No se pudo crear registro diario inicial:", e);
         }
 
         await cargarConsumo();
-        toast.success("Dispositivo agregado y registro diario inicial creado");
       }
     } catch (error: any) {
       console.error(error);
@@ -177,6 +194,8 @@ export default function Dashboard() {
 
   const totalConsumo = consumoData.reduce((sum, item) => sum + Number(item.consumo_kwh ?? 0), 0);
   const promedioConsumo = consumoData.length > 0 ? totalConsumo / consumoData.length : 0;
+  const currentDevice = dispositivos.find(d => d.id === selectedDevice);
+  const eficienciaScore = Math.min(100, Math.max(0, 85 - (promedioConsumo * 10)));
 
   const chartData = consumoData.map((item) => {
     if (viewMode === "hourly") {
@@ -186,7 +205,6 @@ export default function Dashboard() {
         kwh: Number(item.consumo_kwh),
       };
     }
-    // daily
     const d = new Date(item.fecha || item.ts);
     return {
       fecha: d.toLocaleDateString("es-ES", { day: "2-digit", month: "short" }),
@@ -194,145 +212,379 @@ export default function Dashboard() {
     };
   });
 
+  const tips = [
+    { icon: Lightbulb, text: "Apaga las luces al salir de una habitación", saving: "10%" },
+    { icon: Gauge, text: "Usa electrodomésticos en horarios de menor demanda", saving: "15%" },
+    { icon: Target, text: "Mantén los filtros de aire acondicionado limpios", saving: "8%" },
+    { icon: Zap, text: "Desconecta dispositivos en standby", saving: "5%" },
+  ];
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard de Consumo</h1>
-        <p className="text-muted-foreground">
-          Gestiona y visualiza tu consumo energético
-        </p>
-      </div>
-
-      {/* Device summary cards */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dispositivo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(dispositivos.find(d => d.id === selectedDevice)?.nombre) || "-"}</div>
-            <p className="text-xs text-muted-foreground">nombre</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Potencia nominal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(dispositivos.find(d => d.id === selectedDevice)?.potencia_w ?? 0)} W</div>
-            <p className="text-xs text-muted-foreground">potencia configurada</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Potencia actual</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{consumoData.length > 0 ? Math.round((Number(consumoData[consumoData.length-1].consumo_kwh ?? 0) * 1000)) : (dispositivos.find(d => d.id === selectedDevice)?.potencia_w ?? 0)} W</div>
-            <p className="text-xs text-muted-foreground">estimación instantánea (W)</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Chart */}
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <CardTitle>Historial de Consumo</CardTitle>
-            <CardDescription>
-              {viewMode === "hourly"
-                ? `Últimas ${hoursWindow} horas` 
-                : `Últimos ${daysWindow} días`}
-            </CardDescription>
+    <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-lg">
+            <Activity className="h-6 w-6 text-primary" />
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <select
-              className="rounded border p-2 bg-card text-card-foreground border-border shadow-sm text-sm"
-              value={selectedDevice ?? ""}
-              onChange={(e) => { setSelectedDevice(e.target.value || null); setLoadingData(true); }}
-            >
-              <option value="">Selecciona dispositivo</option>
-              {dispositivos.map((d) => (
-                <option key={d.id} value={d.id}>{d.nombre || d.id}</option>
-              ))}
-            </select>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              ¡Hola, {profileName || "Usuario"}!
+            </h1>
+            <p className="text-muted-foreground">
+              Aquí está el resumen de tu consumo energético
+            </p>
+          </div>
+        </div>
+      </div>
 
-            <select
-              className="rounded border p-2 bg-card text-card-foreground border-border shadow-sm text-sm"
-              value={viewMode}
-              onChange={(e) => { setViewMode(e.target.value as any); setLoadingData(true); }}
-            >
-              <option value="hourly">Horario (por hora)</option>
-              <option value="daily">Diario</option>
-            </select>
-
-            {viewMode === "hourly" ? (
-              <select className="rounded border p-2 bg-card text-card-foreground border-border shadow-sm text-sm" value={hoursWindow} onChange={(e) => setHoursWindow(Number(e.target.value))}>
-                <option value={24}>24h</option>
-                <option value={48}>48h</option>
-                <option value={72}>72h</option>
-              </select>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Consumo Total
+            </CardTitle>
+            <div className="p-2 rounded-lg bg-primary/20">
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingData ? (
+              <Skeleton className="h-8 w-24" />
             ) : (
-              <select className="rounded border p-2 bg-card text-card-foreground border-border shadow-sm text-sm" value={daysWindow} onChange={(e) => setDaysWindow(Number(e.target.value))}>
-                <option value={7}>7d</option>
-                <option value={30}>30d</option>
-                <option value={90}>90d</option>
-              </select>
+              <>
+                <div className="text-2xl font-bold">{totalConsumo.toFixed(2)} kWh</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {viewMode === "hourly" ? `Últimas ${hoursWindow}h` : `Últimos ${daysWindow} días`}
+                </p>
+              </>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Promedio
+            </CardTitle>
+            <div className="p-2 rounded-lg bg-green-500/20">
+              <TrendingDown className="h-4 w-4 text-green-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingData ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{promedioConsumo.toFixed(3)} kWh</div>
+                <Badge variant="secondary" className="mt-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                  <TrendingDown className="h-3 w-3 mr-1" />
+                  Óptimo
+                </Badge>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Dispositivos
+            </CardTitle>
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <Cpu className="h-4 w-4 text-amber-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dispositivos.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Registrados en tu cuenta
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Eficiencia
+            </CardTitle>
+            <div className="p-2 rounded-lg bg-blue-500/20">
+              <Target className="h-4 w-4 text-blue-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingData ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{eficienciaScore.toFixed(0)}%</div>
+                <Progress value={eficienciaScore} className="mt-2 h-2" />
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Current Device Info */}
+      {currentDevice && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="border-0 shadow-md bg-card/80 backdrop-blur">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Cpu className="h-4 w-4" />
+                Dispositivo Activo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold">{currentDevice.nombre}</div>
+              <p className="text-xs text-muted-foreground">Seleccionado actualmente</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-md bg-card/80 backdrop-blur">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Gauge className="h-4 w-4" />
+                Potencia Nominal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold">{currentDevice.potencia_w ?? 0} W</div>
+              <p className="text-xs text-muted-foreground">Potencia configurada</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-md bg-card/80 backdrop-blur">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Consumo Instantáneo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold">
+                {consumoData.length > 0 
+                  ? Math.round(Number(consumoData[consumoData.length - 1].consumo_kwh ?? 0) * 1000) 
+                  : currentDevice.potencia_w ?? 0} W
+              </div>
+              <p className="text-xs text-muted-foreground">Estimación actual</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Chart Section */}
+      <Card className="border-0 shadow-lg overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Historial de Consumo</CardTitle>
+                <CardDescription>
+                  {viewMode === "hourly"
+                    ? `Últimas ${hoursWindow} horas`
+                    : `Últimos ${daysWindow} días`}
+                </CardDescription>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Select value={selectedDevice ?? ""} onValueChange={(v) => { setSelectedDevice(v || null); setLoadingData(true); }}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Selecciona dispositivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dispositivos.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.nombre || d.id}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={viewMode} onValueChange={(v) => { setViewMode(v as any); setLoadingData(true); }}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hourly">Por hora</SelectItem>
+                  <SelectItem value="daily">Por día</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {viewMode === "hourly" ? (
+                <Select value={String(hoursWindow)} onValueChange={(v) => setHoursWindow(Number(v))}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24">24h</SelectItem>
+                    <SelectItem value="48">48h</SelectItem>
+                    <SelectItem value="72">72h</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Select value={String(daysWindow)} onValueChange={(v) => setDaysWindow(Number(v))}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 días</SelectItem>
+                    <SelectItem value="30">30 días</SelectItem>
+                    <SelectItem value="90">90 días</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {chartData.length > 0 ? (
+        <CardContent className="pt-6">
+          {loadingData ? (
+            <Skeleton className="h-[300px] w-full rounded-lg" />
+          ) : chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="fecha" />
-                <YAxis label={{ value: viewMode === "hourly" ? "Watts (W)" : "kWh", angle: -90, position: 'insideLeft' }} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey={viewMode === "hourly" ? "watts" : "kwh"}
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))" }}
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorKwh" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" />
+                <XAxis 
+                  dataKey="fecha" 
+                  tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  tickLine={false}
+                  axisLine={false}
                 />
-              </LineChart>
+                <YAxis 
+                  tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `${value}`}
+                  label={{ 
+                    value: 'kWh', 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { fill: "hsl(var(--muted-foreground))" }
+                  }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                  formatter={(value: number) => [`${value.toFixed(3)} kWh`, "Consumo"]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="kwh"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={3}
+                  fill="url(#colorKwh)"
+                  dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, fill: "hsl(var(--primary))" }}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="py-12 text-center text-muted-foreground">No hay datos de consumo aún para el dispositivo seleccionado.</div>
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              <div className="text-center space-y-3">
+                <div className="p-4 rounded-full bg-muted/50 mx-auto w-fit">
+                  <Zap className="h-10 w-10 opacity-30" />
+                </div>
+                <p className="font-medium">No hay datos de consumo</p>
+                <p className="text-sm">Agrega un dispositivo para comenzar a monitorear</p>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Devices management */}
-      <Card>
+      {/* Tips Section */}
+      <Card className="border-0 shadow-lg bg-gradient-to-r from-amber-500/5 via-transparent to-green-500/5">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Mis Dispositivos
-          </CardTitle>
-          <CardDescription>
-            Agrega y administra los dispositivos eléctricos asociados a tu cuenta
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <Sparkles className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <CardTitle>Consejos de Ahorro Energético</CardTitle>
+              <CardDescription>
+                Pequeños cambios que hacen una gran diferencia
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <form onSubmit={handleAgregarDispositivo} className="grid md:grid-cols-3 gap-4 items-end">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            {tips.map((tip, index) => (
+              <div
+                key={index}
+                className="p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 cursor-pointer group"
+                onClick={() => trackClick(`tip_${index}`)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <tip.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-foreground font-medium leading-tight">{tip.text}</p>
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 dark:border-green-800">
+                      Ahorra hasta {tip.saving}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Devices Management */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Plus className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Gestión de Dispositivos</CardTitle>
+              <CardDescription>
+                Agrega y administra los dispositivos eléctricos de tu hogar
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            <form onSubmit={handleAgregarDispositivo} className="grid md:grid-cols-3 gap-4 items-end p-4 rounded-xl bg-muted/30 border border-border/50">
               <div className="space-y-2">
-                <Label htmlFor="device-nombre">Nombre del dispositivo</Label>
+                <Label htmlFor="device-nombre" className="text-sm font-medium">
+                  Nombre del dispositivo
+                </Label>
                 <Input
                   id="device-nombre"
-                  placeholder="Ej. Nevera"
+                  placeholder="Ej. Refrigerador, TV, Aire acondicionado"
                   value={nuevoDispositivo.nombre}
                   onChange={(e) => setNuevoDispositivo({ ...nuevoDispositivo, nombre: e.target.value })}
                   required
+                  className="bg-background"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="device-potencia">Potencia (W)</Label>
+                <Label htmlFor="device-potencia" className="text-sm font-medium">
+                  Potencia (Watts)
+                </Label>
                 <Input
                   id="device-potencia"
                   type="number"
@@ -341,34 +593,55 @@ export default function Dashboard() {
                   placeholder="Ej. 1500"
                   value={nuevoDispositivo.potencia_w}
                   onChange={(e) => setNuevoDispositivo({ ...nuevoDispositivo, potencia_w: e.target.value })}
+                  className="bg-background"
                 />
               </div>
 
-              <div>
-                <Button type="submit" className="w-full md:w-auto">
-                  Agregar dispositivo
-                </Button>
-              </div>
+              <Button type="submit" className="w-full gap-2">
+                <Plus className="h-4 w-4" />
+                Agregar dispositivo
+              </Button>
             </form>
 
             {dispositivos.length > 0 ? (
-              <div className="grid gap-2">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {dispositivos.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between p-3 border border-border rounded-lg bg-card/50 hover:bg-accent/50 transition-colors">
-                    <div>
-                      <div className="font-medium">{d.nombre}</div>
-                      <div className="text-xs text-muted-foreground">{d.potencia_w ? `${d.potencia_w} W` : "Potencia no definida"}</div>
+                  <div 
+                    key={d.id} 
+                    className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-300 cursor-pointer ${
+                      selectedDevice === d.id 
+                        ? "border-primary bg-primary/5 shadow-md" 
+                        : "border-border bg-card hover:border-primary/30 hover:shadow-sm"
+                    }`}
+                    onClick={() => { setSelectedDevice(d.id); setLoadingData(true); }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${selectedDevice === d.id ? "bg-primary/20" : "bg-muted"}`}>
+                        <Cpu className={`h-4 w-4 ${selectedDevice === d.id ? "text-primary" : "text-muted-foreground"}`} />
+                      </div>
+                      <div>
+                        <div className="font-medium">{d.nombre}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {d.potencia_w ? `${d.potencia_w} W` : "Potencia no definida"}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</div>
+                    <ChevronRight className={`h-4 w-4 transition-transform ${selectedDevice === d.id ? "text-primary rotate-90" : "text-muted-foreground"}`} />
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No hay dispositivos. Agrega uno arriba.</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="p-4 rounded-full bg-muted/50 mx-auto w-fit mb-3">
+                  <Cpu className="h-8 w-8 opacity-30" />
+                </div>
+                <p className="font-medium">No hay dispositivos registrados</p>
+                <p className="text-sm">Agrega tu primer dispositivo para comenzar</p>
+              </div>
             )}
           </div>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }
