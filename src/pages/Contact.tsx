@@ -1,5 +1,6 @@
 import { useMetrics } from "@/hooks/useMetrics";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ const contactSchema = z.object({
 
 export default function Contact() {
   const { trackPageView, trackClick } = useMetrics("contact");
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: "",
@@ -30,20 +32,16 @@ export default function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      // Validar datos del formulario
       contactSchema.parse(formData);
-      
       setLoading(true);
       trackClick("submit_contact_form");
 
-      // Simular envío (aquí puedes integrar un servicio de email real)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulación de envío (reemplaza con servicio real si deseas)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      toast.success("¡Mensaje enviado correctamente! Te responderemos pronto.");
-      
-      // Limpiar formulario
+      toast.success(t('contact')?.messages?.sent ?? "¡Mensaje enviado correctamente! Te responderemos pronto.");
       setFormData({ nombre: "", email: "", mensaje: "" });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -51,7 +49,7 @@ export default function Contact() {
           toast.error(err.message);
         });
       } else {
-        toast.error("Error al enviar el mensaje. Por favor, intenta de nuevo.");
+        toast.error(t('contact')?.messages?.error_send ?? "Error al enviar el mensaje. Por favor, intenta de nuevo.");
       }
     } finally {
       setLoading(false);
@@ -59,100 +57,95 @@ export default function Contact() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
   return (
     <div className="container max-w-6xl py-8">
+      {/* Título y subtítulo */}
       <div className="space-y-2 mb-8">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Contáctanos
+          {t('contact')?.title ?? 'Contáctanos'}
         </h1>
         <p className="text-muted-foreground text-lg">
-          ¿Tienes alguna pregunta? Estamos aquí para ayudarte.
+          {t('contact')?.subtitle ?? '¿Tienes alguna pregunta? Estamos aquí para ayudarte.'}
         </p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
+        {/* Formulario de contacto */}
         <Card>
           <CardHeader>
-            <CardTitle>Envíanos un mensaje</CardTitle>
-            <CardDescription>
-              Completa el formulario y nos pondremos en contacto contigo lo antes posible.
-            </CardDescription>
+            <CardTitle>{t('contact')?.form?.title ?? 'Envíanos un mensaje'}</CardTitle>
+            <CardDescription>{t('contact')?.form?.description ?? 'Completa el formulario y nos pondremos en contacto contigo lo antes posible.'}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre completo</Label>
+                <Label htmlFor="nombre">{t('contact')?.form?.labels?.name ?? 'Nombre completo'}</Label>
                 <Input
                   id="nombre"
                   name="nombre"
                   value={formData.nombre}
                   onChange={handleChange}
-                  placeholder="Tu nombre"
+                  placeholder={t('contact')?.form?.placeholders?.name ?? 'Tu nombre'}
                   required
                   maxLength={100}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label htmlFor="email">{t('contact')?.form?.labels?.email ?? 'Correo electrónico'}</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="tu@email.com"
+                  placeholder={t('contact')?.form?.placeholders?.email ?? 'tu@email.com'}
                   required
                   maxLength={255}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="mensaje">Mensaje</Label>
+                <Label htmlFor="mensaje">{t('contact')?.form?.labels?.message ?? 'Mensaje'}</Label>
                 <Textarea
                   id="mensaje"
                   name="mensaje"
                   value={formData.mensaje}
                   onChange={handleChange}
-                  placeholder="Escribe tu mensaje aquí..."
+                  placeholder={t('contact')?.form?.placeholders?.message ?? 'Escribe tu mensaje aquí...'}
                   required
                   rows={6}
                   maxLength={1000}
                   className="resize-none"
                 />
-                <p className="text-xs text-muted-foreground text-right">
-                  {formData.mensaje.length}/1000
-                </p>
+                <p className="text-xs text-muted-foreground text-right">{formData.mensaje.length}/1000</p>
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Enviando..." : "Enviar mensaje"}
+                {loading ? (t('contact')?.form?.sending ?? 'Enviando...') : (t('contact')?.form?.send_button ?? 'Enviar mensaje')}
               </Button>
             </form>
           </CardContent>
         </Card>
 
+        {/* Información de contacto */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Información de contacto</CardTitle>
-              <CardDescription>
-                También puedes contactarnos directamente a través de estos medios.
-              </CardDescription>
+              <CardTitle>{t('contact')?.info?.title ?? 'Información de contacto'}</CardTitle>
+              <CardDescription>{t('contact')?.info?.description ?? 'También puedes contactarnos directamente a través de estos medios.'}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  <Mail className="h-5 w-5 text-primary" />
-                </div>
+                <Mail className="h-5 w-5 text-primary mt-1" />
                 <div>
-                  <p className="font-medium">Email</p>
+                  <p className="font-medium">{t('contact')?.info?.labels?.email ?? 'Email'}</p>
                   <a href="mailto:contacto@ecosense.com" className="text-muted-foreground hover:text-primary">
                     contacto@ecosense.com
                   </a>
@@ -160,21 +153,17 @@ export default function Contact() {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  <Phone className="h-5 w-5 text-primary" />
-                </div>
+                <Phone className="h-5 w-5 text-primary mt-1" />
                 <div>
-                  <p className="font-medium">Teléfono</p>
+                  <p className="font-medium">{t('contact')?.info?.labels?.phone ?? 'Teléfono'}</p>
                   <p className="text-muted-foreground">+593 96 2357 512</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
+                <MapPin className="h-5 w-5 text-primary mt-1" />
                 <div>
-                  <p className="font-medium">Dirección</p>
+                  <p className="font-medium">{t('contact')?.info?.labels?.address ?? 'Dirección'}</p>
                   <p className="text-muted-foreground">
                     Ciudadela Universitaria<br />
                     28001 Manta, Ecuador
@@ -184,11 +173,10 @@ export default function Contact() {
             </CardContent>
           </Card>
 
-         
-
+          {/* Preguntas frecuentes */}
           <Card>
             <CardHeader>
-              <CardTitle>Preguntas frecuentes</CardTitle>
+              <CardTitle>{t('contact')?.faq?.title ?? 'Preguntas frecuentes'}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">

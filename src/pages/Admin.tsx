@@ -10,6 +10,7 @@ import { Shield, Users, Activity, Eye, Clock, BarChart2, AlertTriangle } from "l
 import { toast } from "sonner";
 
 export default function Admin() {
+
   const navigate = useNavigate();
   const { user, isAdmin, loading } = useAuth();
   const { trackClick } = useMetrics("admin");
@@ -35,6 +36,16 @@ export default function Admin() {
     }
   }, [user, isAdmin, loading, navigate]);
 
+  // Listen for refresh-data event (triggered by Ctrl/Cmd+R shortcut)
+  useEffect(() => {
+    const handleRefreshData = async () => {
+      await cargarDatosAdmin();
+    };
+
+    window.addEventListener('refresh-data', handleRefreshData);
+    return () => window.removeEventListener('refresh-data', handleRefreshData);
+  }, []);
+
   const cargarDatosAdmin = async () => {
     try {
       // Load metrics
@@ -45,6 +56,7 @@ export default function Admin() {
         .limit(50);
 
       if (metricsError) throw metricsError;
+
 
       // Load stats
       const { count: usersCount } = await supabase
@@ -90,6 +102,7 @@ export default function Admin() {
         .eq("formulario", "home")
         .eq("accion", "abandonment");
 
+        
       // Compute aggregates client-side
       let avgTimeToCTA = 0;
       let pctCTAWithin30 = 0;

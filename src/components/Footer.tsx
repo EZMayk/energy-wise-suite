@@ -1,7 +1,9 @@
 import { Leaf, Mail, Github, Twitter } from "lucide-react";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { t } = useLanguage();
 
   return (
     <footer className="border-t bg-background mt-auto">
@@ -17,28 +19,26 @@ export const Footer = () => {
                 EcoSense
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Gestión inteligente de consumo energético con accesibilidad universal.
-            </p>
+            <p className="text-sm text-muted-foreground">{t('footer')?.tagline ?? 'Gestión inteligente de consumo energético con accesibilidad universal.'}</p>
           </div>
 
           {/* Links */}
           <div className="space-y-3">
-            <h3 className="font-semibold">Legal</h3>
+            <h3 className="font-semibold">{t('footer')?.legal ?? 'Legal'}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <a href="/privacy" className="hover:text-primary transition-colors">
-                  Política de privacidad
+                  {t('footer')?.privacy ?? 'Política de privacidad'}
                 </a>
               </li>
               <li>
                 <a href="/terms" className="hover:text-primary transition-colors">
-                  Términos de servicio
+                  {t('footer')?.terms ?? 'Términos de servicio'}
                 </a>
               </li>
               <li>
                 <a href="/contact" className="hover:text-primary transition-colors">
-                  Contacto
+                  {t('footer')?.contact ?? 'Contacto'}
                 </a>
               </li>
             </ul>
@@ -46,7 +46,7 @@ export const Footer = () => {
 
           {/* Contact */}
           <div className="space-y-3">
-            <h3 className="font-semibold">Contacto</h3>
+            <h3 className="font-semibold">{t('footer')?.contact ?? 'Contacto'}</h3>
             <div className="flex gap-4">
               <a
                 href="mailto:info@ecosense.com"
@@ -74,7 +74,7 @@ export const Footer = () => {
         </div>
 
         <div className="mt-8 pt-6 border-t text-center text-sm text-muted-foreground">
-          <p>© {currentYear} EcoSense. Todos los derechos reservados.</p>
+          <p>{(t('footer')?.copyright ?? '© {year} EcoSense. Todos los derechos reservados.').replace('{year}', String(currentYear))}</p>
         </div>
       </div>
     </footer>

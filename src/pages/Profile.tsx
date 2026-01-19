@@ -11,18 +11,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useMetrics } from "@/hooks/useMetrics";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { 
-  User, 
-  Mail, 
-  Calendar, 
-  Shield, 
-  Settings, 
-  Eye,
-  Save,
-  LogOut,
-  Trash2,
-  AlertTriangle
+  User, Mail, Calendar, Shield, Settings, Eye,
+  Save, LogOut, Trash2, AlertTriangle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -47,6 +40,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const { user, loading, signOut, isAdmin } = useAuth();
   const { trackClick, trackMetric } = useMetrics("profile");
+  const { t } = useLanguage();
   const { perfil: accessibilityProfile, setPerfil } = useAccessibility();
 
   const [profileData, setProfileData] = useState<any>(null);
@@ -79,7 +73,7 @@ export default function Profile() {
       setNombre(data?.nombre || "");
     } catch (e) {
       console.error("Error loading profile:", e);
-      toast.error("No se pudo cargar el perfil");
+      toast.error(t('profile')?.messages?.error_load ?? "No se pudo cargar el perfil");
     } finally {
       setLoadingProfile(false);
     }
@@ -91,12 +85,12 @@ export default function Profile() {
 
     const nuevo = nombre?.trim() ?? "";
     if (!nuevo || nuevo.length < 2) {
-      toast.error("El nombre debe tener al menos 2 caracteres");
+      toast.error(t('profile')?.messages?.name_too_short ?? "El nombre debe tener al menos 2 caracteres");
       return;
     }
 
     if (profileData && (profileData.nombre || "") === nuevo) {
-      toast.info("No hay cambios que guardar");
+      toast.info(t('profile')?.messages?.no_changes ?? "No hay cambios que guardar");
       return;
     }
 
@@ -113,11 +107,11 @@ export default function Profile() {
       if (error) throw error;
       const duration = Date.now() - start;
       try { await trackMetric({ accion: "profile_update", metadata: { ms: duration } }); } catch {}
-      toast.success("Perfil actualizado correctamente");
+      toast.success(t('profile')?.messages?.updated ?? "Perfil actualizado");
       await cargarPerfil();
     } catch (e) {
       console.error(e);
-      toast.error("No se pudo actualizar el perfil");
+      toast.error(t('profile')?.messages?.error_update ?? "No se pudo actualizar el perfil");
     } finally {
       setSaving(false);
     }
@@ -127,7 +121,6 @@ export default function Profile() {
     const typedValue = value as "visual" | "auditiva" | "motriz" | "cognitiva" | "ninguna";
     setPerfil(typedValue);
     
-    // Save to database
     if (user) {
       try {
         const { error } = await supabase
@@ -137,7 +130,6 @@ export default function Profile() {
             updated_at: new Date().toISOString() 
           })
           .eq("id", user.id);
-        
         if (error) throw error;
         toast.success("Perfil de accesibilidad actualizado");
         await cargarPerfil();
@@ -264,46 +256,25 @@ export default function Profile() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="accessibility-profile">Perfil de accesibilidad</Label>
-              <Select
-                value={profileData?.perfil_accesibilidad || accessibilityProfile || "ninguna"}
-                onValueChange={handleAccessibilityProfileChange}
-              >
-                <SelectTrigger id="accessibility-profile">
-                  <SelectValue placeholder="Selecciona un perfil" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ninguna">Sin perfil específico</SelectItem>
-                  <SelectItem value="visual">Discapacidad visual</SelectItem>
-                  <SelectItem value="auditiva">Discapacidad auditiva</SelectItem>
-                  <SelectItem value="motriz">Discapacidad motriz</SelectItem>
-                  <SelectItem value="cognitiva">Discapacidad cognitiva</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Al seleccionar un perfil, la interfaz se adaptará a tus necesidades.
-              </p>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Configuración actual</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="flex justify-between p-2 rounded bg-muted/50">
-                  <span className="text-muted-foreground">Alto contraste:</span>
-                  <span>{profileData?.configuracion_accesibilidad?.highContrast ? "Sí" : "No"}</span>
-                </div>
-                <div className="flex justify-between p-2 rounded bg-muted/50">
-                  <span className="text-muted-foreground">Texto a voz:</span>
-                  <span>{profileData?.configuracion_accesibilidad?.textToSpeech ? "Sí" : "No"}</span>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Usa el menú de accesibilidad en la barra lateral para más opciones.
-              </p>
-            </div>
+            <Label htmlFor="accessibility-profile">Perfil de accesibilidad</Label>
+            <Select
+              value={profileData?.perfil_accesibilidad || accessibilityProfile || "ninguna"}
+              onValueChange={handleAccessibilityProfileChange}
+            >
+              <SelectTrigger id="accessibility-profile">
+                <SelectValue placeholder="Selecciona un perfil" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ninguna">Sin perfil específico</SelectItem>
+                <SelectItem value="visual">Discapacidad visual</SelectItem>
+                <SelectItem value="auditiva">Discapacidad auditiva</SelectItem>
+                <SelectItem value="motriz">Discapacidad motriz</SelectItem>
+                <SelectItem value="cognitiva">Discapacidad cognitiva</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Al seleccionar un perfil, la interfaz se adaptará a tus necesidades.
+            </p>
           </CardContent>
         </Card>
 
@@ -319,7 +290,7 @@ export default function Profile() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />

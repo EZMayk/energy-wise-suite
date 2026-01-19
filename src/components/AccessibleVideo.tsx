@@ -11,6 +11,7 @@ export const AccessibleVideo: React.FC<AccessibleVideoProps> = ({ src, captionsS
 
   return (
     <div className="w-full">
+      
       <video
         src={src}
         controls

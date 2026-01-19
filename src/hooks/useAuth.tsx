@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const useAuth = () => {
+  const { t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,10 +90,10 @@ export const useAuth = () => {
 
       if (error) throw error;
 
-      toast.success("Registro exitoso. Por favor, revisa tu email para confirmar tu cuenta.");
+      toast.success(t('auth_register_success') ?? "Registro exitoso. Por favor, revisa tu email para confirmar tu cuenta.");
       return { error: null };
     } catch (error: any) {
-      toast.error(error.message || "Error al registrarse");
+      toast.error(error.message || (t('auth_register_error') ?? "Error al registrarse"));
       return { error };
     }
   };
@@ -163,10 +165,10 @@ export const useAuth = () => {
         console.warn('Could not write login_attempts row (migration/policy may not be applied)', e);
       }
 
-      toast.success("¡Bienvenido a EcoSense!");
+      toast.success(t('auth_welcome') ?? "¡Bienvenido a EcoSense!");
       return { error: null };
     } catch (error: any) {
-      toast.error(error.message || "Error al iniciar sesión");
+      toast.error(error.message || (t('auth_signin_error') ?? "Error al iniciar sesión"));
       return { error };
     }
   };
@@ -176,10 +178,10 @@ export const useAuth = () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      toast.success("Sesión cerrada correctamente");
+      toast.success(t('auth_signout_success') ?? "Sesión cerrada correctamente");
       return { error: null };
     } catch (error: any) {
-      toast.error(error.message || "Error al cerrar sesión");
+      toast.error(error.message || (t('auth_signout_error') ?? "Error al cerrar sesión"));
       return { error };
     }
   };
@@ -206,7 +208,7 @@ export const useAuth = () => {
 
       if (error) throw error;
 
-      toast.success("Revisa tu email para restablecer tu contraseña");
+      toast.success(t('auth_reset_sent') ?? "Revisa tu email para restablecer tu contraseña");
       try {
         await supabase.from('metricas_usabilidad').insert({
           user_id: null,
@@ -219,7 +221,7 @@ export const useAuth = () => {
       }
       return { error: null };
     } catch (error: any) {
-      toast.error(error.message || "Error al enviar email de recuperación");
+      toast.error(error.message || (t('auth_reset_error') ?? "Error al enviar email de recuperación"));
       return { error };
     }
   };

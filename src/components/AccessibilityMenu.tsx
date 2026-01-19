@@ -148,6 +148,20 @@ export const AccessibilityMenu = () => {
     toast.success("✨ Perfil de accesibilidad aplicado correctamente");
   };
 
+  const [highContrast, setHighContrast] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (highContrast) {
+        document.documentElement.setAttribute("data-contrast", "high");
+      } else {
+        document.documentElement.removeAttribute("data-contrast");
+      }
+    } catch (e) {
+      // ignore (SSR or safety)
+    }
+  }, [highContrast]);
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -579,6 +593,19 @@ export const AccessibilityMenu = () => {
             >
               Cancelar
             </Button>
+          </div>
+          <div className="mt-4">
+            <Label className="mb-2">Contraste</Label>
+            <div className="flex items-center gap-3">
+              <Button
+                variant={highContrast ? "default" : "outline"}
+                onClick={() => setHighContrast((v) => !v)}
+                size="sm"
+              >
+                {highContrast ? <Check className="h-4 w-4 mr-2" /> : null}
+                Contraste Alto
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>

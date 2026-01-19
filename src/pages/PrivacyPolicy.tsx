@@ -1,9 +1,11 @@
 import { useMetrics } from "@/hooks/useMetrics";
 import { useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function PrivacyPolicy() {
   const { trackPageView } = useMetrics("privacy");
+  const { t } = useLanguage();
 
   useEffect(() => {
     trackPageView();
@@ -13,16 +15,16 @@ export default function PrivacyPolicy() {
     <div className="container max-w-4xl py-8 space-y-6">
       <div className="space-y-2">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Política de Privacidad
+          {t('privacy')?.title ?? 'Política de Privacidad'}
         </h1>
         <p className="text-muted-foreground">
-          Última actualización: {new Date().toLocaleDateString('es-ES')}
+          {(t('privacy')?.last_updated ?? 'Última actualización: {date}').replace('{date}', new Date().toLocaleDateString('es-ES'))}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>1. Recopilación de Información</CardTitle>
+          <CardTitle>{t('privacy')?.sections?.['1']?.title ?? '1. Recopilación de Información'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>
@@ -39,7 +41,7 @@ export default function PrivacyPolicy() {
 
       <Card>
         <CardHeader>
-          <CardTitle>2. Uso de la Información</CardTitle>
+          <CardTitle>{t('privacy')?.sections?.['2']?.title ?? '2. Uso de la Información'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>
@@ -57,7 +59,7 @@ export default function PrivacyPolicy() {
 
       <Card>
         <CardHeader>
-          <CardTitle>3. Protección de Datos</CardTitle>
+          <CardTitle>{t('privacy')?.sections?.['3']?.title ?? '3. Protección de Datos'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>
@@ -74,7 +76,7 @@ export default function PrivacyPolicy() {
 
       <Card>
         <CardHeader>
-          <CardTitle>4. Compartir Información</CardTitle>
+          <CardTitle>{t('privacy')?.sections?.['4']?.title ?? '4. Compartir Información'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>
@@ -90,7 +92,7 @@ export default function PrivacyPolicy() {
 
       <Card>
         <CardHeader>
-          <CardTitle>5. Sus Derechos</CardTitle>
+          <CardTitle>{t('privacy')?.sections?.['5']?.title ?? '5. Sus Derechos'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>
@@ -111,7 +113,7 @@ export default function PrivacyPolicy() {
 
       <Card>
         <CardHeader>
-          <CardTitle>6. Cookies y Tecnologías Similares</CardTitle>
+          <CardTitle>{t('privacy')?.sections?.['6']?.title ?? '6. Cookies y Tecnologías Similares'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>
@@ -127,7 +129,7 @@ export default function PrivacyPolicy() {
 
       <Card>
         <CardHeader>
-          <CardTitle>7. Cambios a esta Política</CardTitle>
+          <CardTitle>{t('privacy')?.sections?.['7']?.title ?? '7. Cambios a esta Política'}</CardTitle>
         </CardHeader>
         <CardContent>
           <p>
@@ -139,12 +141,12 @@ export default function PrivacyPolicy() {
 
       <Card>
         <CardHeader>
-          <CardTitle>8. Contacto</CardTitle>
+          <CardTitle>{t('privacy')?.sections?.['8']?.title ?? '8. Contacto'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>
-            Si tiene preguntas sobre esta Política de Privacidad, contáctenos a través de nuestra 
-            <a href="/contact" className="text-primary hover:underline ml-1">página de contacto</a>.
+            <p>
+            {t('privacy')?.contact_paragraph ?? 'Si tiene preguntas sobre esta Política de Privacidad, contáctenos a través de nuestra'} 
+            <a href="/contact" className="text-primary hover:underline ml-1">{t('privacy')?.contact_link ?? 'página de contacto'}</a>.
           </p>
         </CardContent>
       </Card>

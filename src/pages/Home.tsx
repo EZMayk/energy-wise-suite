@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useMetrics } from "@/hooks/useMetrics";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
+import { useLanguage } from '@/contexts/LanguageContext';
 import { 
   Leaf, 
   TrendingDown, 
@@ -17,6 +18,7 @@ import {
 export default function Home() {
   const { trackClick, trackMetric } = useMetrics("home");
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   // Metrics refs/state
   const startTs = useRef<number>(Date.now());
@@ -41,7 +43,6 @@ export default function Home() {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    // initial
     onScroll();
 
     return () => {
@@ -78,35 +79,40 @@ export default function Home() {
   const features = [
     {
       icon: Zap,
-      title: "Monitoreo en Tiempo Real",
-      description: "Visualiza tu consumo energético diario con métricas actualizadas.",
+      title: t('home')?.feature_1_title ?? 'Monitoreo en Tiempo Real',
+      description: t('home')?.feature_1_desc ?? 'Visualiza tu consumo energético al instante'
     },
     {
       icon: TrendingDown,
-      title: "Reduce tu Consumo",
-      description: "Recibe recomendaciones personalizadas para optimizar tu energía.",
+      title: t('home')?.feature_2_title ?? 'Análisis Inteligente',
+      description: t('home')?.feature_2_desc ?? 'Obtén insights sobre tus patrones de consumo'
     },
     {
       icon: LineChart,
-      title: "Análisis Detallado",
-      description: "Gráficas y reportes completos de tu historial de consumo.",
+      title: t('home')?.feature_3_title ?? 'Reportes Detallados',
+      description: t('home')?.feature_3_desc ?? 'Accede a estadísticas y gráficos comprensibles'
     },
     {
       icon: Shield,
-      title: "Datos Seguros",
-      description: "Tu información protegida con autenticación robusta.",
+      title: t('home')?.feature_4_title ?? 'Seguridad y Privacidad',
+      description: t('home')?.feature_4_desc ?? 'Tus datos están protegidos y encriptados'
+    },
+    {
+      icon: Leaf,
+      title: t('home')?.feature_5_title ?? 'Sostenibilidad',
+      description: t('home')?.feature_5_desc ?? 'Reduce tu huella de carbono'
     },
     {
       icon: Eye,
-      title: "Accesibilidad Universal",
-      description: "Interfaz adaptable según WCAG 2.2 para todos los usuarios.",
-    },
+      title: t('home')?.feature_6_title ?? 'Control Total',
+      description: t('home')?.feature_6_desc ?? 'Gestiona tus dispositivos fácilmente'
+    }
   ];
 
   return (
     <div className="space-y-0 -mx-4 md:-mx-6 -my-6">
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
+      <section className="relative py-8 md:py-12 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-background -z-10" />
         
         <div className="container">
@@ -114,21 +120,20 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
               <Leaf className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">
-                Sostenibilidad + Tecnología
+                {t('home')?.tagline ?? 'Sostenibilidad + Tecnología'}
               </span>
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Gestiona tu{" "}
+              {t('home')?.hero_title_1 ?? 'Gestiona tu'}{" "}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                energía
+                {t('home')?.hero_title_highlight ?? 'energía'}
               </span>
-              {" "}de forma inteligente
+              {" "}{t('home')?.hero_tail ?? 'de forma inteligente'}
             </h1>
 
             <p className="text-xl text-muted-foreground">
-              EcoSense te ayuda a monitorear, analizar y optimizar tu consumo energético
-              con una interfaz completamente accesible para todos.
+              {t('home')?.hero_subtitle ?? 'EcoSense te ayuda a monitorear, analizar y optimizar tu consumo energético'}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -144,7 +149,7 @@ export default function Home() {
                 }}
               >
                 <Link to={user ? "/dashboard" : "/auth"} className="flex items-center gap-2">
-                  {user ? "Ir al Dashboard" : "Comenzar Gratis"}
+                  {user ? (t('home')?.cta_primary_logged ?? 'Ir al Dashboard') : (t('home')?.cta_primary_guest ?? 'Comenzar Gratis')}
                   <ArrowRight className="h-5 w-5" />
                 </Link>
               </Button>
@@ -155,7 +160,7 @@ export default function Home() {
                 className="text-lg"
                 onClick={() => { trackClick("cta_secondary"); interactionRef.current += 1; }}
               >
-                <Link to="#features">Conocer Más</Link>
+                <Link to="#features">{t('home')?.cta_secondary ?? 'Conocer Más'}</Link>
               </Button>
             </div>
           </div>
@@ -163,14 +168,14 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-32 bg-muted/30">
+      <section id="features" className="py-12 md:py-16 bg-muted/30">
         <div className="container">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-4xl font-bold">
-              Características Principales
+              {t('home')?.features_title ?? 'Características Principales'}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Todo lo que necesitas para tomar control de tu consumo energético
+              {t('home')?.features_subtitle ?? 'Todo lo que necesitas para tomar control de tu consumo energético'}
             </p>
           </div>
 
@@ -183,7 +188,7 @@ export default function Home() {
                   className="border-2 hover:border-primary/50 transition-all hover:shadow-lg"
                 >
                   <CardContent className="pt-6">
-                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4">
                       <Icon className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
@@ -197,16 +202,16 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 md:py-32">
+      <section className="py-12 md:py-16">
         <div className="container">
           <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-glow to-accent opacity-10" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/50 to-accent opacity-10" />
             <CardContent className="relative p-12 text-center space-y-6">
               <h2 className="text-3xl md:text-4xl font-bold">
-                ¿Listo para reducir tu consumo energético?
+                {t('home')?.cta_final_title ?? '¿Listo para reducir tu consumo energético?'}
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Únete a EcoSense y comienza a tomar decisiones informadas sobre tu energía
+                {t('home')?.cta_final_subtitle ?? 'Únete a EcoSense y comienza a tomar decisiones informadas sobre tu energía'}
               </p>
               <Button
                 asChild
@@ -214,7 +219,7 @@ export default function Home() {
                 className="text-lg"
                 onClick={() => trackClick("cta_footer")}
               >
-                <Link to="/auth">Crear Cuenta Gratuita</Link>
+                <Link to="/auth">{t('home')?.cta_signup ?? 'Crear Cuenta Gratuita'}</Link>
               </Button>
             </CardContent>
           </Card>
