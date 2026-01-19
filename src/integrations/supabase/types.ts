@@ -18,101 +18,125 @@ export type Database = {
         Row: {
           consumo_kwh: number
           created_at: string
+          dispositivo_id: string | null
           fecha: string
           id: string
           user_id: string
-          dispositivo_id: string | null
         }
         Insert: {
           consumo_kwh: number
           created_at?: string
+          dispositivo_id?: string | null
           fecha: string
           id?: string
           user_id: string
-          dispositivo_id?: string | null
         }
         Update: {
           consumo_kwh?: number
           created_at?: string
+          dispositivo_id?: string | null
           fecha?: string
           id?: string
           user_id?: string
-          dispositivo_id?: string | null
         }
-        Relationships: []
-      }
-      dispositivos: {
-        Row: {
-          id: string
-          user_id: string
-          nombre: string
-          potencia_w: number | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          nombre: string
-          potencia_w?: number | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          nombre?: string
-          potencia_w?: number | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "consumo_usuarios_dispositivo_id_fkey"
+            columns: ["dispositivo_id"]
+            isOneToOne: false
+            referencedRelation: "dispositivos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dispositivo_consumo_diario: {
         Row: {
-          id: string
-          dispositivo_id: string
-          fecha: string
           consumo_kwh: number
           created_at: string
-        }
-        Insert: {
-          id?: string
           dispositivo_id: string
           fecha: string
+          id: string
+        }
+        Insert: {
           consumo_kwh: number
           created_at?: string
+          dispositivo_id: string
+          fecha: string
+          id?: string
         }
         Update: {
-          id?: string
-          dispositivo_id?: string
-          fecha?: string
           consumo_kwh?: number
           created_at?: string
+          dispositivo_id?: string
+          fecha?: string
+          id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dispositivo_consumo_diario_dispositivo_id_fkey"
+            columns: ["dispositivo_id"]
+            isOneToOne: false
+            referencedRelation: "dispositivos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dispositivo_consumo_horario: {
         Row: {
-          id: string
-          dispositivo_id: string
-          ts: string
           consumo_kwh: number
           created_at: string
+          dispositivo_id: string
+          id: string
+          ts: string
         }
         Insert: {
-          id?: string
-          dispositivo_id: string
-          ts: string
           consumo_kwh: number
           created_at?: string
+          dispositivo_id: string
+          id?: string
+          ts: string
         }
         Update: {
-          id?: string
-          dispositivo_id?: string
-          ts?: string
           consumo_kwh?: number
           created_at?: string
+          dispositivo_id?: string
+          id?: string
+          ts?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispositivo_consumo_horario_dispositivo_id_fkey"
+            columns: ["dispositivo_id"]
+            isOneToOne: false
+            referencedRelation: "dispositivos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispositivos: {
+        Row: {
+          created_at: string
+          id: string
+          nombre: string
+          potencia_w: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nombre: string
+          potencia_w?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nombre?: string
+          potencia_w?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -145,6 +169,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          configuracion_accesibilidad: Json | null
           created_at: string
           email: string
           id: string
@@ -155,6 +180,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          configuracion_accesibilidad?: Json | null
           created_at?: string
           email: string
           id: string
@@ -165,6 +191,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          configuracion_accesibilidad?: Json | null
           created_at?: string
           email?: string
           id?: string
@@ -205,6 +232,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      insert_daily_consumption: {
+        Args: { _date?: string; _hours_per_day?: number }
+        Returns: undefined
+      }
+      insert_hourly_consumption: {
+        Args: { _date?: string; _device_id?: string }
+        Returns: undefined
       }
     }
     Enums: {

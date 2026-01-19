@@ -133,20 +133,117 @@ All colors MUST be HSL.
 @layer components {
   :root {
     /* sensible defaults (can be overridden by AccessibilityContext) */
-    --font-size-base: 1rem;
+    --font-size-base: 16px;
+    --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --contrast-boost: 1;
     --animation-duration: 0.3s;
-    --target-size-min: 40px;
+    --target-size-min: 44px;
     --spacing-interactive: 0.5rem;
     --content-max-width: 75ch;
     --line-height: 1.6;
+    --letter-spacing: 0;
+    --line-height-text: 1.5;
+    /* Custom colors (only applied when custom-colors-enabled class is present) */
+    --custom-bg: #ffffff;
+    --custom-text: #000000;
   }
 
   /* Apply base variables across the app */
   html, body {
     font-size: var(--font-size-base);
+    font-family: var(--font-family-base);
     line-height: var(--line-height);
-    transition: filter var(--animation-duration), font-size var(--animation-duration);
+    transition: filter var(--animation-duration), 
+                font-size var(--animation-duration),
+                font-family var(--animation-duration);
+  }
+
+  /* Apply letter spacing and line height to text elements */
+  body, p, h1, h2, h3, h4, h5, h6, li, td, th, span, div, label, a {
+    letter-spacing: var(--letter-spacing) !important;
+  }
+
+  p, li, td, article, div, span, label {
+    line-height: var(--line-height-text) !important;
+  }
+
+  /* High contrast mode */
+  .high-contrast {
+    filter: contrast(var(--contrast-boost));
+  }
+
+  /* Custom colors mode - applies custom background and text colors */
+  .custom-colors-enabled {
+    background-color: var(--custom-bg) !important;
+    color: var(--custom-text) !important;
+  }
+
+  .custom-colors-enabled *:not(button):not(a):not(.no-custom-colors) {
+    background-color: var(--custom-bg) !important;
+    color: var(--custom-text) !important;
+  }
+
+  .custom-colors-enabled .card,
+  .custom-colors-enabled .popover,
+  .custom-colors-enabled [role="dialog"],
+  .custom-colors-enabled .sheet,
+  .custom-colors-enabled header,
+  .custom-colors-enabled main,
+  .custom-colors-enabled footer,
+  .custom-colors-enabled aside {
+    background-color: var(--custom-bg) !important;
+    color: var(--custom-text) !important;
+  }
+
+  .custom-colors-enabled button,
+  .custom-colors-enabled a {
+    /* Keep some contrast for interactive elements */
+    background-color: var(--custom-text) !important;
+    color: var(--custom-bg) !important;
+    border-color: var(--custom-text) !important;
+  }
+
+  .custom-colors-enabled button:hover,
+  .custom-colors-enabled a:hover {
+    opacity: 0.8;
+  }
+
+  /* Link highlight mode - makes links more visible */
+  .link-highlight a:not(.no-highlight),
+  .link-highlight [role="link"] {
+    text-decoration: underline !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 3px !important;
+  }
+
+  .link-highlight a:focus,
+  .link-highlight a:hover {
+    outline: 3px solid hsl(var(--primary)) !important;
+    outline-offset: 2px !important;
+    background-color: hsl(var(--primary) / 0.1) !important;
+  }
+
+  /* Spacing modes */
+  .spacing-normal {
+    --spacing-interactive: 0.5rem;
+  }
+
+  .spacing-medium {
+    --spacing-interactive: 1rem;
+  }
+
+  .spacing-wide {
+    --spacing-interactive: 1.5rem;
+  }
+
+  .spacing-medium main,
+  .spacing-medium .container {
+    gap: 1.5rem;
+  }
+
+  .spacing-wide main,
+  .spacing-wide .container {
+    gap: 2rem;
   }
 
   /* Visual profile: increase contrast and font size */
@@ -195,5 +292,72 @@ All colors MUST be HSL.
   .perfil-auditiva :focus {
     outline: 3px solid hsl(var(--primary) / 0.9);
     outline-offset: 2px;
+  }
+
+  /* Sidebar animations */
+  .sidebar-animate {
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Skip to content link for keyboard navigation */
+  .skip-link {
+    @apply absolute -top-10 left-4 z-[100] bg-primary text-primary-foreground px-4 py-2 rounded-md transition-all duration-200;
+  }
+
+  .skip-link:focus {
+    @apply top-4;
+  }
+
+  /* Voice control indicator - shows when voice control is active */
+  .voice-control-active::after {
+    content: "🎤";
+    position: fixed;
+    bottom: 5rem;
+    right: 1rem;
+    font-size: 2rem;
+    animation: pulse 2s infinite;
+    z-index: 50;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(1.1);
+    }
+  }
+
+  /* Keyboard shortcut hints */
+  kbd {
+    @apply inline-flex items-center justify-center px-2 py-1 text-xs font-semibold bg-muted border border-border rounded shadow-sm;
+  }
+
+  /* Custom scrollbar para el chatbot */
+  .chatbot-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .chatbot-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 8px 0;
+  }
+
+  .chatbot-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.25);
+    border-radius: 10px;
+    transition: background 0.2s;
+  }
+
+  .chatbot-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.4);
+  }
+
+  /* Para Firefox */
+  .chatbot-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.25) transparent;
   }
 }

@@ -26,35 +26,29 @@ export default function Contact() {
     mensaje: "",
   });
 
-
   useEffect(() => {
     trackPageView();
   }, [trackPageView]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      // Validar datos del formulario
-      
       contactSchema.parse(formData);
-      
       setLoading(true);
       trackClick("submit_contact_form");
 
-      // Simular envío (aquí puedes integrar un servicio de email real)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulación de envío (reemplaza con servicio real si deseas)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast.success(t('contact')?.messages?.sent ?? "¡Mensaje enviado correctamente! Te responderemos pronto.");
-      
-      // Limpiar formulario
       setFormData({ nombre: "", email: "", mensaje: "" });
     } catch (error) {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => {
           toast.error(err.message);
         });
-        } else {
+      } else {
         toast.error(t('contact')?.messages?.error_send ?? "Error al enviar el mensaje. Por favor, intenta de nuevo.");
       }
     } finally {
@@ -63,27 +57,31 @@ export default function Contact() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
   return (
     <div className="container max-w-6xl py-8">
+      {/* Título y subtítulo */}
       <div className="space-y-2 mb-8">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           {t('contact')?.title ?? 'Contáctanos'}
         </h1>
-        <p className="text-muted-foreground text-lg">{t('contact')?.subtitle ?? '¿Tienes alguna pregunta? Estamos aquí para ayudarte.'}</p>
+        <p className="text-muted-foreground text-lg">
+          {t('contact')?.subtitle ?? '¿Tienes alguna pregunta? Estamos aquí para ayudarte.'}
+        </p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
+        {/* Formulario de contacto */}
         <Card>
-            <CardHeader>
-              <CardTitle>{t('contact')?.form?.title ?? 'Envíanos un mensaje'}</CardTitle>
-              <CardDescription>{t('contact')?.form?.description ?? 'Completa el formulario y nos pondremos en contacto contigo lo antes posible.'}</CardDescription>
-            </CardHeader>
+          <CardHeader>
+            <CardTitle>{t('contact')?.form?.title ?? 'Envíanos un mensaje'}</CardTitle>
+            <CardDescription>{t('contact')?.form?.description ?? 'Completa el formulario y nos pondremos en contacto contigo lo antes posible.'}</CardDescription>
+          </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -126,9 +124,7 @@ export default function Contact() {
                   maxLength={1000}
                   className="resize-none"
                 />
-                <p className="text-xs text-muted-foreground text-right">
-                  {formData.mensaje.length}/1000
-                </p>
+                <p className="text-xs text-muted-foreground text-right">{formData.mensaje.length}/1000</p>
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
@@ -138,6 +134,7 @@ export default function Contact() {
           </CardContent>
         </Card>
 
+        {/* Información de contacto */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -146,9 +143,7 @@ export default function Contact() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  <Mail className="h-5 w-5 text-primary" />
-                </div>
+                <Mail className="h-5 w-5 text-primary mt-1" />
                 <div>
                   <p className="font-medium">{t('contact')?.info?.labels?.email ?? 'Email'}</p>
                   <a href="mailto:contacto@ecosense.com" className="text-muted-foreground hover:text-primary">
@@ -158,54 +153,29 @@ export default function Contact() {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  <Phone className="h-5 w-5 text-primary" />
-                </div>
+                <Phone className="h-5 w-5 text-primary mt-1" />
                 <div>
                   <p className="font-medium">{t('contact')?.info?.labels?.phone ?? 'Teléfono'}</p>
-                  <p className="text-muted-foreground">+34 900 123 456</p>
+                  <p className="text-muted-foreground">+593 96 2357 512</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
+                <MapPin className="h-5 w-5 text-primary mt-1" />
                 <div>
                   <p className="font-medium">{t('contact')?.info?.labels?.address ?? 'Dirección'}</p>
                   <p className="text-muted-foreground">
-                    Avenida Flavio Alfaro<br />
-                    Manta, Manabí, Ecuador
+                    Ciudadela Universitaria<br />
+                    28001 Manta, Ecuador
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Preguntas frecuentes */}
           <Card>
-          <CardHeader>
-              <CardTitle>{t('contact')?.hours?.title ?? 'Horario de atención'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Lunes - Viernes:</span>
-                  <span className="font-medium">9:00 - 18:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Sábado:</span>
-                  <span className="font-medium">10:00 - 14:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Domingo:</span>
-                  <span className="font-medium">Cerrado</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-          <CardHeader>
+            <CardHeader>
               <CardTitle>{t('contact')?.faq?.title ?? 'Preguntas frecuentes'}</CardTitle>
             </CardHeader>
             <CardContent>
